@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - Asistencia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+    .wrapper { display: flex; flex: 1; overflow-y: hidden; }
+    .sidebar { min-width: 250px; max-width: 250px; background-color: #f8f9fa; border-right: 1px solid #dee2e6; overflow-y: auto; }
+    .content { flex-grow: 1; padding: 20px; }
+    @media (max-width: 768px) {
+      .sidebar { position: absolute; left: -250px; top: 56px; height: calc(100% - 56px); z-index: 1000; }
+      .sidebar.show { left: 0; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container-fluid">
+    <button class="btn btn-outline-secondary d-md-none" id="toggleSidebar">☰</button>
+    <a class="navbar-brand ms-2" href="{% url 'dashboard' %}">Sistema de Asistencia</a>
+    <div class="d-flex ms-auto align-items-center">
+      <span class="me-3">👤 {{ user.nombre_completo|default:user.username }} ({{ user.get_role_display }})</span>
+      <a href="{% url 'admin:logout' %}" class="btn btn-light btn-sm">🚪 Cerrar sesión</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrapper">
+  <div class="sidebar bg-light" id="sidebarMenu">
+    <nav class="nav flex-column p-3">
+      <a class="nav-link" href="{% url 'dashboard' %}">📊 Dashboard</a>
+
+      {% if user.role == 'admin' %}
+        <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuReportes">
+          📊 Reportes <span>▾</span>
+        </a>
+        <div class="collapse ps-3" id="menuReportes">
+          <a href="{% url 'exportar_excel' %}?mes={{ now.month }}&anio={{ now.year }}" class="nav-link">📥 Asistencias Mensuales</a>
+        </div>
+
+        <a class="nav-link" href="/admin/asistencia/user/">
+          👤 Gestión de Usuarios
+        </a>
+        <a class="nav-link" href="/admin/">
+          ⚙️ Panel de Administración
+        </a>
+      {% endif %}
+    </nav>
+  </div>
+
+  <div class="content">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const toggleSidebar = document.getElementById('toggleSidebar');
+  const sidebar = document.getElementById('sidebarMenu');
+  toggleSidebar?.addEventListener('click', () => sidebar.classList.toggle('show'));
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

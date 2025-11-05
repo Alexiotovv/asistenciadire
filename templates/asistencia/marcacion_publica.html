@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marcar Asistencia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #reloj { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 20px 0; color: #2c3e50; }
+  </style>
+</head>
+<body>
+
+<body>
+
+<div class="container mt-4">
+  <div id="reloj">--:--:--</div>
+
+  <div class="text-center">
+    <h2>Marcar Asistencia</h2>
+    <div class="col-md-6 mx-auto">
+      <input type="text" id="dniInput" class="form-control form-control-lg mb-3" autocomplete="off" placeholder="Ingrese DNI" autofocus maxlength="12">
+      <input type="password" id="pinInput" class="form-control form-control-lg mb-3" placeholder="Clave PIN (4 dígitos)" maxlength="4" inputmode="numeric">
+      <button id="btnMarcar" class="btn btn-primary btn-lg w-100">Marcar Asistencia</button>
+    </div>
+    <div id="mensaje" class="mt-4"></div>
+
+    <div class="mt-4">
+      {% comment %} <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Ingresar al Panel</a> {% endcomment %}
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  function actualizarReloj() {
+    const ahora = new Date();
+    document.getElementById('reloj').textContent = ahora.toLocaleTimeString('es-ES', { hour12: false });
+  }
+  setInterval(actualizarReloj, 1000);
+  actualizarReloj();
+
+  // Flujo de teclado
+  document.getElementById('dniInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('pinInput').focus();
+    }
+  });
+
+  document.getElementById('pinInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      marcar();
+    }
+  });
+
+  document.getElementById('btnMarcar').addEventListener('click', marcar);
+
+  function marcar() {
+    const dni = document.getElementById('dniInput').value.trim();
+    const pin = document.getElementById('pinInput').value.trim();
+
+    if (!dni || !pin) {
+      mostrarMensaje('DNI y PIN son obligatorios.', 'danger');
+      return;
+    }
+
+    if (!/^\d{4}$/.test(pin)) {
+      mostrarMensaje('El PIN debe ser numérico de 4 dígitos.', 'warning');
+      return;
+    }
+
+    fetch("{% url 'marcar_asistencia' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: `dni=${encodeURIComponent(dni)}&pin=${encodeURIComponent(pin)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        mostrarMensaje(
+          `✅ <strong>${data.nombre}</strong> - ${data.tipo === 'entrada' ? 'Entrada' : 'Salida'} marcada a las <strong>${data.hora}</strong>`,
+          'success'
+        );
+        // Limpiar y reiniciar
+        document.getElementById('dniInput').value = '';
+        document.getElementById('pinInput').value = '';
+        document.getElementById('dniInput').focus();
+      } else {
+        mostrarMensaje(`❌ ${data.error}`, 'danger');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      mostrarMensaje('Error de conexión.', 'danger');
+    });
+  }
+
+  function mostrarMensaje(texto, tipo) {
+    const msgDiv = document.getElementById('mensaje');
+    msgDiv.innerHTML = `
+      <div class="alert alert-${tipo} alert-dismissible fade show">
+        ${texto}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>`;
+  }
+</script>
+</body>
+</body>
+</html>

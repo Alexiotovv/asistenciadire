@@ -1,0 +1,16 @@
+{% extends 'asistencia/base_dashboard.html' %}
+
+{% block content %}
+<h2>Bienvenido, {{ user.nombre_completo|default:user.username }}!</h2>
+<p>Estás en el panel de control del sistema de asistencia.</p>
+
+{% if user.role == 'admin' %}
+  <div class="alert alert-info">
+    💡 Puedes gestionar usuarios, ver reportes o acceder al panel de administración desde el menú lateral.
+  </div>
+{% else %}
+  <div class="alert alert-secondary">
+    Solo tienes acceso limitado. Contacta al administrador para más opciones.
+  </div>
+{% endif %}
+{% endblock %}
